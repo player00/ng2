@@ -17,7 +17,7 @@ export class ColumnFilterItemDirective implements OnInit {
 
 	ngOnInit() {
 		const itemList = this.itemList;
-		const link = itemList.cellService.build('column-filter', itemList.column);
+		const link = itemList.cellService.get('column-filter', itemList.column);
 		link(this.viewContainerRef, this);
 	}
 }

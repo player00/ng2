@@ -28,6 +28,7 @@ import { TitleModule } from './title/title.module';
 import { ExportModule } from './export/export.module';
 import { ImportModule } from './import/import.module';
 import { ValidationModule } from './validation/validation.module';
+import { LiveModule } from './live/live.module';
 
 Model.register('columnChooser', ColumnChooserModel)
 	.register('columnFilter', ColumnFilterModel)
@@ -60,7 +61,8 @@ Model.register('columnChooser', ColumnChooserModel)
 		StatusBarModule,
 		TabTrapModule,
 		TitleModule,
-		ValidationModule
+		ValidationModule,
+		LiveModule
 	]
 })
 export class PluginModule { }

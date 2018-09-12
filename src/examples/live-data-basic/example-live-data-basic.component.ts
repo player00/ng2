@@ -1,6 +1,5 @@
-import { Component, ViewChild, ViewChildren } from '@angular/core';
+import { Component } from '@angular/core';
 import { DataService, Quote } from '../data.service';
-import { Observable } from 'rxjs';
 import { Column, StyleCellContext } from 'ng2-qgrid';
 
 @Component({
@@ -52,3 +51,4 @@ export class ExampleLiveDataBasicComponent {
 		return Math.floor(Math.random() * (max - min)) + min;
 	}
 }
+

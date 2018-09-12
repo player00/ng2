@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, ViewContainerRef, NgZone } from '@angular/core';
 import { GRID_PREFIX } from 'ng2-qgrid/core/definition';
 import { AppError } from 'ng2-qgrid/core/infrastructure/error';
 import { ColumnModel } from 'ng2-qgrid/core/column-type/column.model';
@@ -17,6 +17,7 @@ const classify = TdCtrl.classify;
 })
 export class TdCoreDirective implements Td, OnInit, OnDestroy {
 	private $implicit = this;
+	private oldValue: any;
 
 	@Input('q-grid-core-td') columnView: ColumnView;
 	element: HTMLElement = null;
@@ -27,7 +28,8 @@ export class TdCoreDirective implements Td, OnInit, OnDestroy {
 		private viewContainerRef: ViewContainerRef,
 		private cellService: CellService,
 		private tr: TrCoreDirective,
-		element: ElementRef
+		element: ElementRef,
+		private zone: NgZone
 	) {
 
 		this.element = element.nativeElement.parentNode;
@@ -44,7 +46,7 @@ export class TdCoreDirective implements Td, OnInit, OnDestroy {
 		switch (value) {
 			case 'view':
 			case 'init': {
-				const link = this.cellService.build('body', this.column, 'view');
+				const link = this.cellService.get('body', this.column, 'view');
 				link(this.viewContainerRef, this);
 				if (value !== 'init') {
 					this.element.classList.remove(`${GRID_PREFIX}-edit`);
@@ -52,8 +54,16 @@ export class TdCoreDirective implements Td, OnInit, OnDestroy {
 
 				break;
 			}
+			case 'changes': {
+				const link = this.cellService.find('body', this.column, 'changes');
+				if (link) {
+					link(this.viewContainerRef, this);
+					this.element.classList.add(`${GRID_PREFIX}-changes`);
+				}
+				break;
+			}
 			case 'edit': {
-				const link = this.cellService.build('body', this.column, 'edit');
+				const link = this.cellService.get('body', this.column, 'edit');
 				link(this.viewContainerRef, this);
 
 				this.element.classList.add(`${GRID_PREFIX}-edit`);
@@ -66,7 +76,13 @@ export class TdCoreDirective implements Td, OnInit, OnDestroy {
 
 	get value() {
 		const { column, row, rowIndex, columnIndex } = this;
-		return this.$view.body.render.getValue(row, column, rowIndex, columnIndex);
+		const value = this.$view.body.render.getValue(row, column, rowIndex, columnIndex);
+		if (value !== this.oldValue) {
+			this.oldValue = value;
+			setTimeout(() => this.mode('changes'), 0);
+		}
+
+		return value;
 	}
 
 	set value(value) {

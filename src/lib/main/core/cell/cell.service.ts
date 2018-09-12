@@ -1,4 +1,4 @@
-import { Injectable, ViewContainerRef, TemplateRef } from '@angular/core';
+import { Injectable, ViewContainerRef } from '@angular/core';
 import { AppError } from 'ng2-qgrid/core/infrastructure/error';
 import { noop } from 'ng2-qgrid/core/utility/kit';
 import { ColumnModel } from 'ng2-qgrid/core/column-type/column.model';
@@ -9,7 +9,7 @@ function canBuild(column) {
 }
 
 function buildId(source: string, column: ColumnModel, mode = 'view') {
-	let { key, type, itemType } = column as any;
+	const { key, type, itemType } = column as any;
 	return `${source}-${mode}-cell-${type}-of-${itemType}-the-${key}.tpl.html`;
 }
 
@@ -35,6 +35,24 @@ function buildKeys(source: string, column: ColumnModel, mode = 'view') {
 
 			return result;
 		}
+		case 'changes': {
+			const result = [
+				`${mode}-cell-${type}-the-${key}.tpl.html`,
+				`${mode}-cell-the-${key}.tpl.html`,
+				`${mode}-cell-${type}.tpl.html`,
+				`${mode}-cell.tpl.html`,
+				`${mode}-cell-text.tpl.html`
+			];
+
+			if (itemType) {
+				result.splice(0, 0, ...[
+					`${mode}-cell-${type}-of-${itemType}-the-${key}.tpl.html`,
+					`${mode}-cell-${type}-of-${itemType}.tpl.html`,
+				]);
+			}
+
+			return result;
+		}
 		case 'edit': {
 			type = column.editor || type;
 			const result = [
@@ -54,8 +72,9 @@ function buildKeys(source: string, column: ColumnModel, mode = 'view') {
 
 			return result;
 		}
-		default:
+		default: {
 			throw new AppError('cell.service', `Invalid mode '${mode}'`);
+		}
 	}
 }
 
@@ -65,7 +84,19 @@ export class CellService {
 
 	constructor(private templateService: TemplateService) { }
 
-	public build(source: string, column: ColumnModel, mode: 'view' | 'edit' = 'view') {
+	get(source: string, column: ColumnModel, mode: 'view' | 'edit' | 'changes' = 'view') {
+		const commit = this.find(source, column, mode);
+		if (!commit) {
+			throw new AppError(
+				'cell.service',
+				`Can't find template for ${column.key}`
+			);
+		}
+
+		return commit;
+	}
+
+	find(source: string, column: ColumnModel, mode: 'view' | 'edit' | 'changes' = 'view') {
 		if (!canBuild(column)) {
 			return noop;
 		}
@@ -81,21 +112,18 @@ export class CellService {
 		const keys = buildKeys(source, column, mode);
 		const link = templateService.find(keys);
 
-		if (!link) {
-			throw new AppError(
-				'cell.service',
-				`Can't find template for ${keys[0]}`
-			);
+		if (link) {
+			commit = (container: ViewContainerRef, context: any) => {
+				container.clear();
+
+				const createView = templateService.viewFactory(context);
+				createView(link, container);
+			};
+
+			commits.set(id, commit);
+			return commit;
 		}
 
-		commit = (container: ViewContainerRef, context: any) => {
-			container.clear();
-
-			const createView = templateService.viewFactory(context);
-			createView(link, container);
-		};
-
-		commits.set(id, commit);
-		return commit;
+		return null;
 	}
 }

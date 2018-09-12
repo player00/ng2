@@ -45,7 +45,7 @@ export class TfCoreDirective implements Td, OnInit, OnDestroy {
 		this.root.bag.foot.addCell(this);
 		classify(element, column);
 
-		const link = this.cellService.build('foot', this.column);
+		const link = this.cellService.get('foot', this.column);
 		link(this.viewContainerRef, this);
 	}
 

@@ -61,7 +61,7 @@ export class ThCoreDirective implements Td, OnInit, OnDestroy {
 			target = columnModel;
 		}
 
-		const link = this.cellService.build(source, target, 'view');
+		const link = this.cellService.get(source, target, 'view');
 		link(this.viewContainerRef, this);
 	}
 
